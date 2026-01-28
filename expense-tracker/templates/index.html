@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold text-primary">Welcome to Expense Tracker</h1>
+    <p class="lead">Track your expenses, manage budgets, and visualize your spending patterns!</p>
+
+    {% if not session.get('loggedin') %}
+    <a href="{{ url_for('register') }}" class="btn btn-success btn-lg me-2">Get Started</a>
+    <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Login</a>
+    {% else %}
+    <a href="{{ url_for('transactions') }}" class="btn btn-primary btn-lg">View Transactions</a>
+    {% endif %}
+</div>
+{% endblock %}

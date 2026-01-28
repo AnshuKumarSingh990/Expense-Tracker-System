@@ -1,0 +1,6 @@
+Flask==2.3.2
+Flask-MySQLdb==1.0.1
+Flask-Mail==0.9.1
+Flask-WTF==1.1.1
+WTForms==3.0.1
+email-validator==2.0.0.post2

@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="row">
+    <!-- Add Transaction -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-lg border-0 rounded-3 p-4">
+    <div class="d-flex align-items-center mb-4">
+        <img src="{{ url_for('static', filename='images/transaction_icon.png') }}" alt="Add Transaction" style="width:40px; height:40px; margin-right:10px;">
+        <h3 class="text-primary mb-0">💸 Add Transaction</h3>
+    </div>
+            <form method="POST" class="row g-3">
+                <div class="col-md-3">
+                    <input type="date" name="date" class="form-control" required>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" name="description" class="form-control" placeholder="Description" required>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select" required>
+                        <option value="">Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <input type="number" step="0.01" name="amount" class="form-control" placeholder="Amount" required>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-success w-80">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Set Budget Goal -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-lg border-0 rounded-3 p-4">
+            <h3 class="mb-4 text-success">🎯 Set Budget Goal</h3>
+            <form method="POST" action="{{ url_for('budget') }}" class="row g-3">
+                <div class="col-12">
+                    <select name="category" class="form-select" required>
+                        <option value="">Select Category</option>
+                        <option value="Food">Food</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Bills">Bills</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <input type="number" step="0.01" name="budget_amount" class="form-control" placeholder="Budget Amount" required>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary w-100">Set Budget</button>
+                </div>
+            </form>
+
+            {% if budgets %}
+            <hr>
+            <h5 class="mt-3">Current Budgets:</h5>
+            <ul class="list-group">
+                {% for b in budgets %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ b.category }}
+                    <span>₹ {{ b.budget_amount }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Over Budget Alerts -->
+{% if over_budget %}
+<div class="alert alert-danger">
+    <h5>⚠️ Over Budget!</h5>
+    <ul class="mb-0">
+        {% for item in over_budget %}
+            <li>{{ item.category }}: Spent ₹{{ item.spent }} / Budget ₹{{ item.budget }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+
+<!-- Transactions Table -->
+<div class="card shadow-lg border-0 rounded-3 p-4 mb-4">
+    <h3 class="mb-4 text-secondary">📊 Transactions</h3>
+    {% if transactions %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ txn.category }}</td>
+                    <td>{{ txn.description }}</td>
+                    <td>₹ {{ txn.amount }}</td>
+                    <td>{{ txn.date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-center text-muted">No transactions yet. Add one above!</p>
+    {% endif %}
+</div>
+
+<!-- Category-wise Chart -->
+<div class="card shadow-lg border-0 rounded-3 p-4 mb-4">
+    <h3 class="mb-4 text-info">📈 Spending by Category</h3>
+    <div style="display: flex; justify-content: center;">
+    <canvas id="categoryChart" width="400" height="400" style="max-width:400px; max-height:400px;"></canvas>
+</div>
+</div>
+
+
+
+<script>
+fetch("{{ url_for('report_data') }}")
+.then(response => response.json())
+.then(data => {
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+    const labels = data.map(d => d.category);
+    const amounts = data.map(d => d.total);
+
+    // Highlight categories that are over budget in red
+    const backgroundColors = labels.map(label => {
+        {% if over_budget %}
+        const over = {{ over_budget|tojson }};
+        return over.some(o => o.category === label) ? '#dc3545' : '#28a745';
+        {% else %}
+        return '#28a745';
+        {% endif %}
+    });
+
+    new Chart(ctx, {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Expenses',
+                data: amounts,
+                backgroundColor: backgroundColors
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+});
+</script>
+
+{% endblock %}
